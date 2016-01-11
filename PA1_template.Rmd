@@ -63,7 +63,7 @@ maxSteps = max(stepsPerInterval$steps)
 ggplot(data=stepsPerInterval, aes(x=interval, y=steps)) +  geom_line() + ylab("Number of steps") + geom_vline(aes(xintercept=intervalWithMax), color="red", linetype="dashed", size=1)
 ```
 
-The interval `r I(intervalWithMax)` contains the maximum number of steps, which is `r I(maxSteps)`. 
+The interval **`r I(intervalWithMax)`** contains the maximum number of steps, which is **`r I(maxSteps)`**. 
 
 ## Imputing missing values
 
@@ -71,9 +71,10 @@ First of all, let sum the number of missing values in the dataset
 ```{r, echo=TRUE, message=F, warning=F}
 missingSteps = sum(is.na(data$steps))
 ```
-We have `r I(missingSteps)` of missing values
+We have **`r I(missingSteps)`** missing values.
 
 Our strategy for filling in all of the missing values in the dataset is:
+  
   * Find the rows with missing steps
   * If we have an average value for the interval across all days, we use this mean value
   * If there is no average for the interval, we use zero
@@ -111,12 +112,27 @@ meanWithReplacedNa = mean(stepsPerDayReplacedNA$steps)
 medianWithReplacedNa = median(stepsPerDayReplacedNA$steps)
 ```
 
-The mean is `r I(meanWithReplacedNa)`, it used to be `r I(meanStepsPerDay)`. The new median is `r I(medianWithReplacedNa)`, it used to be `r I(medianStepsPerDay)`.
+The mean now is **`r I(meanWithReplacedNa)`**, it used to be **`r I(meanStepsPerDay)`** with the dataset without missing values. The new median is now  **`r I(medianWithReplacedNa)`**, it used to be **`r I(medianStepsPerDay)`** with the dataset without missing values.
+
 ## Are there differences in activity patterns between weekdays and weekends?
 
-
+First, let's prepare our dataset with a new column called dayType, which might be weekend or weekday.
 ```{r, echo=TRUE, message=F, warning=F}
+dataWithReplacedNA$weekday = weekdays(as.Date(as.character(dataWithReplacedNA$date))) 
+dayType = function(weekday) {
+  if(weekday %in% c('Sunday', 'Saturday')) {
+    'weekend'
+  } else {
+    'weekday'
+  }
+}
+dataWithReplacedNA$dayType = apply(dataWithReplacedNA,1, function(row) {dayType(row['weekday'])})
 ```
 
+
+Now, let's plot a time series plot comparing weekend with weekdays. 
 ```{r, echo=TRUE, message=F, warning=F}
+stepsPerIntervalAndDayType = ddply(dataWithReplacedNA, .(interval, dayType), summarize, steps=sum(steps))
+ggplot(data=stepsPerIntervalAndDayType, aes(x=interval, y=steps)) + ylab("Number of steps") +  geom_line() + facet_wrap(~ dayType, ncol=1)
 ```
+

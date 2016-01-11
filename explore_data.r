@@ -66,7 +66,6 @@ dayType = function(weekday) {
     'weekday'
   }
 }
-
 dataWithReplacedNA$dayType = apply(dataWithReplacedNA,1, function(row) {dayType(row['weekday'])})
 
 stepsPerIntervalAndDayType = ddply(dataWithReplacedNA, .(interval, dayType), summarize, steps=sum(steps))
