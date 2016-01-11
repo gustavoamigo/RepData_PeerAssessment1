@@ -7,19 +7,116 @@ output:
 
 
 ## Loading and preprocessing the data
+```{r, echo=TRUE, message=F, warning=F}
 
+#load libraries
+library(ggplot2);library(plyr);
 
+#options
+options(scipen=1, digits=2)
 
+#load data
+data = read.csv("activity.csv")
+
+#remove NA steps
+dataWithoutNA = subset(data, !is.na(steps))
+
+```
 ## What is mean total number of steps taken per day?
+First let's prepare our data:
+```{r, echo=TRUE, message=F, warning=F}
+stepsPerDay = tapply(dataWithoutNA$steps , dataWithoutNA$date, FUN=sum)
+stepsPerDay = stepsPerDay[!is.na(stepsPerDay)]
+stepsPerDay = as.data.frame(stepsPerDay)
+stepsPerDay = cbind(stepsPerDay, rownames(stepsPerDay))
+colnames(stepsPerDay) = c('steps', 'date')
+```
 
+Now, let's plot a histogram.
+```{r, echo=TRUE, message=F, warning=F}
+binwidth = (range(stepsPerDay$steps)[2] - range(stepsPerDay$steps)[1])/10
+ggplot(data=stepsPerDay, aes(steps)) + geom_histogram(binwidth=binwidth) + geom_vline(aes(xintercept=mean(steps)), color="red", linetype="dashed", size=1)
+```
 
+Let's calculate the mean and the median
+```{r, echo=TRUE, message=F, warning=F}
+meanStepsPerDay = mean(stepsPerDay$steps)
+medianStepsPerDay = median(stepsPerDay$steps)
+```
+
+The mean is `r I(meanStepsPerDay)` and the median is `r I(medianStepsPerDay)`.
 
 ## What is the average daily activity pattern?
 
+Let's prepare the data to plot the daily activity
+```{r, echo=TRUE, message=F, warning=F}
+stepsPerInterval = tapply(dataWithoutNA$steps , dataWithoutNA$interval, FUN=mean)
+stepsPerInterval = as.data.frame(stepsPerInterval)
+stepsPerInterval = cbind(stepsPerInterval, as.numeric(rownames(stepsPerInterval)))
+colnames(stepsPerInterval) = c('steps', 'interval')
+```
 
+Let's plot the time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days
+```{r, echo=TRUE, message=F, warning=F}
+intervalWithMax=stepsPerInterval[which.max(stepsPerInterval$steps),2]
+maxSteps = max(stepsPerInterval$steps)
+ggplot(data=stepsPerInterval, aes(x=interval, y=steps)) +  geom_line() + ylab("Number of steps") + geom_vline(aes(xintercept=intervalWithMax), color="red", linetype="dashed", size=1)
+```
+
+The interval `r I(intervalWithMax)` contains the maximum number of steps, which is `r I(maxSteps)`. 
 
 ## Imputing missing values
 
+First of all, let sum the number of missing values in the dataset
+```{r, echo=TRUE, message=F, warning=F}
+missingSteps = sum(is.na(data$steps))
+```
+We have `r I(missingSteps)` of missing values
 
+Our strategy for filling in all of the missing values in the dataset is:
+  * Find the rows with missing steps
+  * If we have an average value for the interval across all days, we use this mean value
+  * If there is no average for the interval, we use zero
+  
+Here's the code that replaces the missing values.
+```{r, echo=TRUE, message=F, warning=F}
+replaceNa = function(row) {
+  if(is.na(row[1])) {
+    meanInterval = stepsPerInterval[row[3],1]
+    meanInterval = if(is.na(meanInterval)) 0 else meanInterval
+    as.numeric(meanInterval)
+  } else {
+    as.numeric(row[1])
+  }
+}
 
+dataWithReplacedNA = data
+dataWithReplacedNA$steps = apply(data,1,replaceNa)
+dataWithReplacedNA$oldSteps = data$steps
+```
+
+Histogram of the total number of steps taken each day
+```{r, echo=TRUE, message=F, warning=F}
+stepsPerDayReplacedNA = tapply(dataWithReplacedNA$steps , dataWithReplacedNA$date, FUN=sum)
+stepsPerDayReplacedNA = as.data.frame(stepsPerDayReplacedNA)
+stepsPerDayReplacedNA = cbind(stepsPerDayReplacedNA, rownames(stepsPerDayReplacedNA))
+colnames(stepsPerDayReplacedNA) = c('steps', 'date')
+binwidth = (range(stepsPerDayReplacedNA$steps)[2] - range(stepsPerDayReplacedNA$steps)[1])/20
+ggplot(data=stepsPerDayReplacedNA, aes(steps)) + geom_histogram(binwidth=binwidth) + geom_vline(aes(xintercept=mean(steps)), color="red", linetype="dashed", size=1)
+```
+
+Now, let's compare the mean and the median of the dataset with replaced missing values
+```{r, echo=TRUE, message=F, warning=F}
+meanWithReplacedNa = mean(stepsPerDayReplacedNA$steps)
+medianWithReplacedNa = median(stepsPerDayReplacedNA$steps)
+```
+
+The mean is `r I(meanWithReplacedNa)`, it used to be `r I(meanStepsPerDay)`. The new median is `r I(medianWithReplacedNa)`, it used to be `r I(medianStepsPerDay)`.
 ## Are there differences in activity patterns between weekdays and weekends?
+
+
+```{r, echo=TRUE, message=F, warning=F}
+```
+
+```{r, echo=TRUE, message=F, warning=F}
+```

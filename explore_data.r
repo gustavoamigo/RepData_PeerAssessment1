@@ -1,5 +1,6 @@
 library(ggplot2);library(plyr)
 data = read.csv("activity.csv")
+
 #remove NA steps
 dataWithoutNA = subset(data, !is.na(steps))
 
